@@ -13,3 +13,5 @@ define('SYSTEM_PATH',	$SelfPath);
 
 //是否开启调试模式
 define('SYSTEM_DEBUG', true);
+//关闭SESSION
+define('SYSTEM_SESSION_OFF', true);

@@ -34,6 +34,9 @@ if( SYSTEM_DEBUG==true ){
 	if( $_GET['error']=='all'||$_COOKIE['error']=='all' ){
 		error_reporting(E_ALL);
 	}
+}else{
+	ini_set("display_errors", "off");
+	error_reporting(0);
 }
 
 //SESSION开关
