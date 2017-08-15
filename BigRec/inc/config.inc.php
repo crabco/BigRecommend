@@ -9,4 +9,7 @@ define("DATABASE_NAME", "gli_bigrecommend");			//数据库名称
 
 $SelfPath				= substr(dirname(__FILE__),0,-4);
 //系统根目录  
-define('SYSTEM_PATH',	$SelfPath); 
+define('SYSTEM_PATH',	$SelfPath);
+
+//是否开启调试模式
+define('SYSTEM_DEBUG', true);
