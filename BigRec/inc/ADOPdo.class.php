@@ -97,7 +97,7 @@ class ADOPdo{
     //取唯一记录
     public function GetOne($SQL){
         $Row    = $this->GetRow($SQL);
-        return current($Row);
+        return ( empty($Row) )? 0 : current($Row);
     }
 	
     

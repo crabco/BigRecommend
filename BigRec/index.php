@@ -331,7 +331,7 @@ switch($Action){
 		//待选池 与 选择池的倍数,默认100倍待选然后随机。
 		$loadMaxPer				= 100;
 		//冷启动的 启用标准,以申报记录为准数字
-		$loadStartZero			= 1;//10000;
+		$loadStartZero			= 10000;
 		//待选的ID池
 		$AppIdElected			= array();
 		//已经选择的ID池
@@ -364,31 +364,24 @@ switch($Action){
 		//如果没有传输用户序号,并且没有COOKIE用户标识,则强制写入游客序号
 		if( !preg_match($NoPreg, $Arr['user_no']) && !preg_match($NoUserPreg, $Cok['bigrec_userno']) ){
 			$UserNo				= 'u-'.FunRandABC(30);
-			$Arr['user_no']		= $UserNo;
 			setcookie('bigrec_userno',$UserNo,time()+86400*5);
 		}else{
 			if( preg_match($NoPreg, $Arr['user_no']) ){
-				$Arr['user_no']	= $Arr['user_no'];
+				$UserNo			= $Arr['user_no'];
 			}else{
-				$Arr['user_no']	= $Cok['bigrec_userno'];
+				$UserNo			= $Cok['bigrec_userno'];
 			}
-			$UserNo				= $Arr['user_no'];
 		}
-		
-		
-		
-		
 		
 		
 		//固定搜索权限为9的数据
-		$RsAll				= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' AND val_grade=9 ORDER BY val_time_update DESC",$loadRows);
-		if( !empty($RsAll) ){
-			foreach($RsAll as $Rss){
-				$AppIdElected[]				= $Rss['val_no'];
-				$Json['info']['static']		= ceil($Json['info']['static'])+1;
-			}
+		$TopChoice							= $Ado->SelectLimit("SELECT * FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' AND val_grade=9 ORDER BY val_time_update DESC",$loadSize);
+		if( !empty($TopChoice) ){
+			$loadSize						= ceil( $loadSize - count($TopChoice) );
+			$loadSize						= ( $loadSize>0 )? $loadSize : 0;
+			$loadMax						= $loadSize * $loadMaxPer;
 		}
-		
+		$Json['info']['static']				= count($TopChoice);
 		
 		
 		/**
@@ -419,6 +412,7 @@ switch($Action){
 					}
 				}
 			}
+			unset($TagTab);
 		}
 		
 		
@@ -460,6 +454,7 @@ switch($Action){
 					}
 				}
 			}
+			unset($Tab);
 			arsort($Tags);
 			$TagsSum						= array_sum($Tags);
 			
@@ -487,9 +482,11 @@ switch($Action){
 								}
 							}
 						}
+						unset($Tab,$Rss);
 					}
 				}
 			}
+			unset($Tags);
 		}
 		
 		
@@ -532,6 +529,7 @@ switch($Action){
 				}
 				}
 			}
+			unset($Tab,$Rs);
 			arsort($Tags);
 			$TagsSum						= array_sum($Tags);
 			
@@ -559,9 +557,11 @@ switch($Action){
 								}
 							}
 						}
+						unset($Tab,$Rss);
 					}
 				}
 			}
+			unset($Tags);
 		}
 		
 		
@@ -570,15 +570,16 @@ switch($Action){
 		$Json['info']['choices']	= count($AppIdElected);
 		$loadRows					= $loadMax - count($AppIdElected);
 		if( $loadRows>0 ){
-			$RsAll					= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
-			if( !empty($RsAll) ){
-				foreach($RsAll as $Rss){
-					if( !in_array($Rss['val_no'],$AppIdElected) ){
-						$AppIdElected[]				= $Rss['val_no'];
+			$Tab					= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
+			if( !empty($Tab) ){
+				foreach($Tab as $Rs){
+					if( !in_array($Rs['val_no'],$AppIdElected) ){
+						$AppIdElected[]				= $Rs['val_no'];
 						$Json['info']['supplement'] = $Json['info']['supplement']+1;
 					}
 				}
 			}
+			unset($Tab,$Rs);
 		}
 		$Json['info']['elected']	= count($AppIdElected);
 		
@@ -595,7 +596,15 @@ switch($Action){
 			}
 		}
 		
-		
+		//将固定选择部分加入 选择池 头部
+		if( !empty($TopChoice) ){
+			$TopChoiceID			= array();
+			foreach($TopChoice as $Rs){
+				$TopChoiceID[]		= $Rs['val_no'];
+			}
+			$AppIdChoice			= array_merge($TopChoiceID,$AppIdChoice);
+			unset($TopChoice,$TopChoiceID);
+		}
 		
 		//根据选择池加载资料列表
 		$Tab					= $Ado->GetAll("SELECT * FROM big_value WHERE app_id={$Arr['app_id']} AND val_no IN (".FunToString($AppIdChoice,",","'").")");
@@ -604,11 +613,12 @@ switch($Action){
 		$Json['val']			= $Tab;
 		
 		$New					= array();
+		
 		if( !empty($Tab) ){
 			foreach($AppIdChoice as $Rs){
 				$Tr							= array();
 				$Tr['app_id']				= $Arr['app_id'];
-				$Tr['user_no']				= $Arr['user_no'];
+				$Tr['user_no']				= $UserNo;
 				$Tr['val_no']				= $Rs;
 				$Tr['user_ip']				= $User['user_ip'];
 				$Tr['user_brower']			= $User['user_brower'];
