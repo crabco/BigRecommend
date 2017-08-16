@@ -5,6 +5,7 @@ $Action				= strtolower(trim($_GET['act']));
 $Json				= array();
 $Ado				= ADOPdo::Start();
 $NoPreg				= '/^[a-z0-9-_]{1,50}$/i';
+$NoUserPreg			= '/^u-[a-z0-9]{30,30}$/i';
 
 SyncApp();
 
@@ -324,29 +325,78 @@ switch($Action){
 		
 		unset($Arr['app_key']);
 		
-		//如果没有传输用户序号,则强制写入游客序号
-		if( !preg_match($NoPreg, $Arr['user_no']) ){
-			$UserNo				= 'u:'.FunRandABC(30);
-			$Arr['user_no']		= $UserNo;
-			setcookie('bigrec_userno',$UserNo,time()+86400*5);
-		}else{
-			$UserNo				= $Arr['user_no'];
-		}
-		
 		$AppRow					= $Ado->GetRow("SELECT * FROM big_app_cache WHERE app_id={$Arr['app_id']}");
 		
 		
+		//待选池 与 选择池的倍数,默认100倍待选然后随机。
+		$loadMaxPer				= 100;
+		//冷启动的 启用标准,以申报记录为准数字
+		$loadStartZero			= 1;//10000;
 		//待选的ID池
 		$AppIdElected			= array();
 		//已经选择的ID池
 		$AppIdChoice			= array();
-		//真实需要获取的数量
+		//选择池所需记录总数
 		$loadSize				= ( preg_match('/^[0-9]+$/i',$Arr['size'])&&ceil($Arr['size'])>1&&ceil($Arr['size'])<101)? ceil($Arr['size']) : 10;
-		//总共需要获取的记录数量
-		$loadMax				= $loadSize * 100;
+		//待选池所需记录总数
+		$loadMax				= $loadSize * $loadMaxPer;
+		//用户当前信息
+		$User					= array();
+		$User['user_ip']		= ip2long( FunGetTrueIP() );
+		$User['user_ip']		= ( !preg_match('/^[0-9]+$/',$User['user_ip']) )? 0 : $User['user_ip'];
+		$User['user_brower']	= FunGetBrowse();
+		$User['user_os']		= FunGetOs();
 		
-		//冷启动
-		if( ceil($AppRow['app_total_declaration'])<10000 ){
+		//设定被静态获取的数据条数
+		$Json['info']['static']		= 0;
+		//设定被差额补充的条数
+		$Json['info']['supplement']	= 0;
+		//待选池总数
+		$Json['info']['elected']	= 0;
+		//通过选择方法获取到的数据条数
+		$Json['info']['choices']	= 0;
+		//设定数据选择的方式方法
+		$Json['info']['choice'] 	= array();
+		
+		
+		
+		
+		//如果没有传输用户序号,并且没有COOKIE用户标识,则强制写入游客序号
+		if( !preg_match($NoPreg, $Arr['user_no']) && !preg_match($NoUserPreg, $Cok['bigrec_userno']) ){
+			$UserNo				= 'u-'.FunRandABC(30);
+			$Arr['user_no']		= $UserNo;
+			setcookie('bigrec_userno',$UserNo,time()+86400*5);
+		}else{
+			if( preg_match($NoPreg, $Arr['user_no']) ){
+				$Arr['user_no']	= $Arr['user_no'];
+			}else{
+				$Arr['user_no']	= $Cok['bigrec_userno'];
+			}
+			$UserNo				= $Arr['user_no'];
+		}
+		
+		
+		
+		
+		
+		
+		//固定搜索权限为9的数据
+		$RsAll				= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' AND val_grade=9 ORDER BY val_time_update DESC",$loadRows);
+		if( !empty($RsAll) ){
+			foreach($RsAll as $Rss){
+				$AppIdElected[]				= $Rss['val_no'];
+				$Json['info']['static']		= ceil($Json['info']['static'])+1;
+			}
+		}
+		
+		
+		
+		/**
+		 * 冷启动,不管是用户还是游客
+		 * 算法:首先根据标签池获取当前应用所有标签,然后根据标签个数/待选池记录总数=平均标签记录数,然后根据显示权重倒叙获取每个标签记录数量
+		 * 最后，如果获取记录总数不等于 待选池所需总数,则以资料更新时间倒叙获取 差数，填充直到满足  待选池所需总数
+		 */
+		if( ceil($AppRow['app_total_declaration'])<$loadStartZero && $loadMax-count($AppIdElected)>0 ){
 			$TagTab				= $Ado->GetAll("SELECT * FROM big_app_tags WHERE app_id={$Arr['app_id']}");
 			
 			//标签池无任何资料
@@ -356,6 +406,8 @@ switch($Action){
 				$Json['val']			= array();
 				break;
 			}else{
+				//表明资料为冷启动获取
+				$Json['info']['choice'][]	= 'zero';
 				//有资料,则根据标签个数平均分配每个标签获取的条数
 				$loadRows				= ceil( $loadMax/count($TagTab) );
 				foreach($TagTab as $Rs){
@@ -366,18 +418,169 @@ switch($Action){
 					}
 					}
 				}
-				//如果所有标签均查询完毕仍旧不够待选总数,则随机不足
-				$loadRows				= $loadMax - count($AppIdElected);
-				if( $loadRows>0 ){
-					$RsAll				= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
-					if( !empty($RsAll) ){
-						foreach($RsAll as $Rss){
-							$AppIdElected[]	= $Rss['val_no'];
+			}
+		}
+		
+		
+		
+		/**
+		 * 热启动,用户获取
+		 */
+		if( ceil($AppRow['app_total_declaration'])>=$loadStartZero && preg_match($NoPreg, $Arr['user_no']) && $loadMax-count($AppIdElected)>0 ){
+			//表明资料为游客热启动获取
+			$Json['info']['choice'][]		= 'user';
+			
+			$Page						= 0;
+			$Size						= 100;
+			
+			//搜索用户最热门的标签
+			$EndTime					= date("Y-m-d H:i:s",time()-86400*$AppRow['app_reco_data']);
+			$SQL						= "SELECT val_tags,COUNT(app_id) AS val_tags_num FROM `big_declaration` WHERE user_time_create>'{$EndTime}' AND user_no='{$UserNo}' GROUP BY val_tags ORDER BY val_tags_num";
+			$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_declaration` WHERE user_time_create>'{$EndTime}' AND user_no='{$UserNo}' GROUP BY val_tags ");
+			$Tags						= array();
+			$Lim						= 0;
+			
+			while( $Lim<$Sum ){
+				$Page					= $Page+1;
+				$Lim					= ($Page-1)*$Size;
+				$Tab					= $Ado->SelectLimit($SQL, $Size, $Lim);
+					
+				if( !empty($Tab) ){
+					foreach($Tab as $Rs){
+						$TagsArr			= explode(",", $Rs['val_tags']);
+						if( !empty($TagsArr) ){
+							foreach($TagsArr as $Rss){
+								if( !in_array($Rss, $Tags) ){
+									$Tags[$Rss]	= ceil($Rs['val_tags_num']);
+								}else{
+									$Tags[$Rss]	= ceil($Tags[$Rss]) + ceil($Rs['val_tags_num']);
+								}
+							}
+						}
+					}
+				}
+			}
+			arsort($Tags);
+			$TagsSum						= array_sum($Tags);
+			
+			//根据标签热门程度,开始搜索数据
+			if( !empty($Tags) ){
+				foreach($Tags as $Tag=>$Rs){
+					$Page						= 0;
+					$Lim						= 0;
+					$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE find_in_set('{$Tag}',val_tags)");
+					
+					
+					//按照标签热门程度比例进行加载总数的比例设定
+					$TagsMaxNum					= ($Rs / $TagsSum) * $loadMax;
+					$TagsChoice					= 0;
+					while( $Lim<$Sum && $TagsMaxNum>$TagsChoice ){
+						
+						$Page					= $Page+1;
+						$Lim					= ($Page-1)*$Size;
+						$Tab					= $Ado->SelectLimit("SELECT val_no FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_grade DESC", $Size, $Lim);
+						if( !empty($Tab) ){
+							foreach($Tab as $Rss){
+								if( !in_array($Rss['val_no'], $AppIdElected) ){
+									$AppIdElected[]	= $Rss['val_no'];
+									$TagsChoice++;
+								}
+							}
 						}
 					}
 				}
 			}
 		}
+		
+		
+		
+		/**
+		 * 热启动,游客获取
+		 * 
+		 */
+		if( ceil($AppRow['app_total_declaration'])>=$loadStartZero && preg_match($NoUserPreg, $Cok['bigrec_userno']) && $loadMax-count($AppIdElected)>0 ){
+			//表明资料为游客热启动获取
+			$Json['info']['choice'][]		= 'play';
+			
+			$Page						= 0;
+			$Size						= 100;
+			
+			//搜索附近最热门的标签
+			$EndTime					= date("Y-m-d H:i:s",time()-86400*$AppRow['app_reco_data']);
+			$SQL						= "SELECT val_tags,ABS(user_ip - {$User['user_ip']}) AS user_ips,COUNT(app_id) AS val_tags_num FROM `big_declaration` WHERE user_time_create>'{$EndTime}' GROUP BY val_tags ORDER BY user_ips DESC";
+			$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_declaration` WHERE user_time_create>'{$EndTime}' GROUP BY val_tags ");
+			$Tags						= array();
+			$Lim						= 0;
+			
+			while( $Lim<$Sum ){
+				$Page					= $Page+1;
+				$Lim					= ($Page-1)*$Size;
+				$Tab					= $Ado->SelectLimit($SQL, $Size, $Lim);
+				
+				if( !empty($Tab) ){
+				foreach($Tab as $Rs){
+					$TagsArr			= explode(",", $Rs['val_tags']);
+					if( !empty($TagsArr) ){
+					foreach($TagsArr as $Rss){
+						if( !in_array($Rss, $Tags) ){
+							$Tags[$Rss]	= ceil($Rs['val_tags_num']);
+						}else{
+							$Tags[$Rss]	= ceil($Tags[$Rss]) + ceil($Rs['val_tags_num']);
+						}
+					}
+					}
+				}
+				}
+			}
+			arsort($Tags);
+			$TagsSum						= array_sum($Tags);
+			
+			//根据标签热门程度,开始搜索数据
+			if( !empty($Tags) ){
+				foreach($Tags as $Tag=>$Rs){
+					$Page						= 0;
+					$Lim						= 0;
+					$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE find_in_set('{$Tag}',val_tags)");
+					
+					
+					//按照标签热门程度比例进行加载总数的比例设定
+					$TagsMaxNum					= ($Rs / $TagsSum) * $loadMax;
+					$TagsChoice					= 0;
+					while( $Lim<$Sum && $TagsMaxNum>$TagsChoice ){
+						
+						$Page					= $Page+1;
+						$Lim					= ($Page-1)*$Size;
+						$Tab					= $Ado->SelectLimit("SELECT val_no FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_grade DESC", $Size, $Lim);
+						if( !empty($Tab) ){
+							foreach($Tab as $Rss){
+								if( !in_array($Rss['val_no'], $AppIdElected) ){
+									$AppIdElected[]	= $Rss['val_no'];
+									$TagsChoice++;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		
+		
+		//如果所有标签均查询完毕仍旧不够待选总数,则随机不足
+		$Json['info']['choices']	= count($AppIdElected);
+		$loadRows					= $loadMax - count($AppIdElected);
+		if( $loadRows>0 ){
+			$RsAll					= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
+			if( !empty($RsAll) ){
+				foreach($RsAll as $Rss){
+					if( !in_array($Rss['val_no'],$AppIdElected) ){
+						$AppIdElected[]				= $Rss['val_no'];
+						$Json['info']['supplement'] = $Json['info']['supplement']+1;
+					}
+				}
+			}
+		}
+		$Json['info']['elected']	= count($AppIdElected);
 		
 		
 		//待选池载入完毕,开始随机选择数据
@@ -407,9 +610,9 @@ switch($Action){
 				$Tr['app_id']				= $Arr['app_id'];
 				$Tr['user_no']				= $Arr['user_no'];
 				$Tr['val_no']				= $Rs;
-				$Tr['user_ip']				= ip2long(FunGetTrueIP());
-				$Tr['user_brower']			= FunGetBrowse();
-				$Tr['user_os']				= FunGetOs();
+				$Tr['user_ip']				= $User['user_ip'];
+				$Tr['user_brower']			= $User['user_brower'];
+				$Tr['user_os']				= $User['user_os'];
 				$Tr['user_time_create']		= date("Y-m-d H:i:s");
 				$New[]						= $Tr;
 			}
@@ -450,7 +653,7 @@ switch($Action){
 	 * 2.3	访问上报接口
 	 */
 	case "up":
-		$Arr					= LoadData('app_id,app_key,user_no,val_no','get');
+		$Arr					= LoadData('app_id,app_key,user_no,val_no,val_tags','get');
 		$Cok					= LoadData('bigrec_userno','cookie');
 		
 		$ExistsApp				= ExistsApp($Arr['app_id'],null,$Arr['app_key']);
@@ -467,10 +670,21 @@ switch($Action){
 		}
 		
 		//如果没有传输用户序号,则强制写入游客序号
-		if( !preg_match($NoPreg, $Arr['user_no'])&&!preg_match('/^u\:[a-z0-9]{30,30}$/i', $subject) ){
+		if( !preg_match($NoPreg, $Arr['user_no'])&&!preg_match($NoUserPreg, $Cok['bigrec_userno']) ){
 			$Json['status']		= false;
 			$Json['error']		= '不允许不进行推荐立即执行上报措施';
 			break;
+		}
+		
+		//如果没有上报标签,则报错
+		if( empty($Arr['val_tags']) ){
+			$Json['status']		= false;
+			$Json['error']		= '上报资料不全';
+			break;
+		}
+		
+		if( !preg_match($NoPreg, $Arr['user_no']) && preg_match($NoUserPreg, $Cok['bigrec_userno']) ){
+			$Arr['user_no']			= $Cok['bigrec_userno'];
 		}
 		
 		$Arr['user_ip']				= ip2long(FunGetTrueIP());
