@@ -9,6 +9,22 @@ $NoUserPreg			= '/^u-[a-z0-9]{30,30}$/i';
 
 SyncApp();
 
+
+//待选池 与 选择池的倍数,默认100倍待选然后随机。
+$loadMaxPer				= 10;
+//冷启动的 启用标准,以申报记录为准数字
+$loadStartZero			= 100;
+//待选的ID池
+$AppIdElected			= array();
+//已经选择的ID池
+$AppIdChoice			= array();
+//选择池所需记录总数
+$loadSize				= ( preg_match('/^[0-9]+$/i',$Arr['size'])&&ceil($Arr['size'])>1&&ceil($Arr['size'])<101)? ceil($Arr['size']) : 10;
+//待选池所需记录总数
+$loadMax				= $loadSize * $loadMaxPer;
+
+
+
 switch($Action){
 	/**
 	 * 1.1	应用创建接口
@@ -328,18 +344,6 @@ switch($Action){
 		$AppRow					= $Ado->GetRow("SELECT * FROM big_app_cache WHERE app_id={$Arr['app_id']}");
 		
 		
-		//待选池 与 选择池的倍数,默认100倍待选然后随机。
-		$loadMaxPer				= 100;
-		//冷启动的 启用标准,以申报记录为准数字
-		$loadStartZero			= 10000;
-		//待选的ID池
-		$AppIdElected			= array();
-		//已经选择的ID池
-		$AppIdChoice			= array();
-		//选择池所需记录总数
-		$loadSize				= ( preg_match('/^[0-9]+$/i',$Arr['size'])&&ceil($Arr['size'])>1&&ceil($Arr['size'])<101)? ceil($Arr['size']) : 10;
-		//待选池所需记录总数
-		$loadMax				= $loadSize * $loadMaxPer;
 		//用户当前信息
 		$User					= array();
 		$User['user_ip']		= ip2long( FunGetTrueIP() );
@@ -394,25 +398,25 @@ switch($Action){
 			
 			//标签池无任何资料
 			if( empty($TagTab) ){
-				$Json['status']			= true;
-				$Json['error']			= '';
-				$Json['val']			= array();
+				$Json['status']				= true;
+				$Json['error']				= '';
+				$Json['val']				= array();
 				break;
 			}else{
 				//表明资料为冷启动获取
 				$Json['info']['choice'][]	= 'zero';
 				//有资料,则根据标签个数平均分配每个标签获取的条数
-				$loadRows				= ceil( $loadMax/count($TagTab) );
+				$loadRows					= ceil( $loadMax/count($TagTab) );
 				foreach($TagTab as $Rs){
-					$RsAll				= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' AND find_in_set('{$Rs}',val_tags) ORDER BY val_grade DESC",$loadRows);
+					$RsAll					= $Ado->SelectLimit("SELECT val_no,val_grade FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' AND find_in_set('{$Rs}',val_tags) ORDER BY val_grade DESC",$loadRows);
 					if( !empty($RsAll) ){
 					foreach($RsAll as $Rss){
-						$AppIdElected[]	= $Rss['val_no'];
+						$AppIdElected[$Rss['val_no']]		= $Rss['val_grade'];
 					}
 					}
 				}
 			}
-			unset($TagTab);
+			unset($TagTab,$Rs);
 		}
 		
 		
@@ -422,7 +426,7 @@ switch($Action){
 		 */
 		if( ceil($AppRow['app_total_declaration'])>=$loadStartZero && preg_match($NoPreg, $Arr['user_no']) && $loadMax-count($AppIdElected)>0 ){
 			//表明资料为游客热启动获取
-			$Json['info']['choice'][]		= 'user';
+			$Json['info']['choice'][]	= 'user';
 			
 			$Page						= 0;
 			$Size						= 100;
@@ -473,11 +477,11 @@ switch($Action){
 						
 						$Page					= $Page+1;
 						$Lim					= ($Page-1)*$Size;
-						$Tab					= $Ado->SelectLimit("SELECT val_no FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_grade DESC", $Size, $Lim);
+						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
 						if( !empty($Tab) ){
 							foreach($Tab as $Rss){
-								if( !in_array($Rss['val_no'], $AppIdElected) ){
-									$AppIdElected[]	= $Rss['val_no'];
+								if( !isset($AppIdElected[$Rss['val_no']]) ){
+									$AppIdElected[ $Rss['val_no'] ]	= $Rss['val_grade'];
 									$TagsChoice++;
 								}
 							}
@@ -491,13 +495,16 @@ switch($Action){
 		
 		
 		
+		
+		
 		/**
 		 * 热启动,游客获取
 		 * 
 		 */
-		if( ceil($AppRow['app_total_declaration'])>=$loadStartZero && preg_match($NoUserPreg, $Cok['bigrec_userno']) && $loadMax-count($AppIdElected)>0 ){
+		if( ceil($AppRow['app_total_declaration'])>=$loadStartZero && !preg_match($NoPreg, $Arr['user_no']) && preg_match($NoUserPreg, $Cok['bigrec_userno']) && $loadMax-count($AppIdElected)>0 ){
+			
 			//表明资料为游客热启动获取
-			$Json['info']['choice'][]		= 'play';
+			$Json['info']['choice'][]	= 'play';
 			
 			$Page						= 0;
 			$Size						= 100;
@@ -548,11 +555,11 @@ switch($Action){
 						
 						$Page					= $Page+1;
 						$Lim					= ($Page-1)*$Size;
-						$Tab					= $Ado->SelectLimit("SELECT val_no FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_grade DESC", $Size, $Lim);
+						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
 						if( !empty($Tab) ){
 							foreach($Tab as $Rss){
-								if( !in_array($Rss['val_no'], $AppIdElected) ){
-									$AppIdElected[]	= $Rss['val_no'];
+								if( !isset($AppIdElected[$Rss['val_no']]) ){
+									$AppIdElected[ $Rss['val_no'] ]	= $Rss['val_grade'];
 									$TagsChoice++;
 								}
 							}
@@ -566,16 +573,18 @@ switch($Action){
 		
 		
 		
+		
+		
 		//如果所有标签均查询完毕仍旧不够待选总数,则随机不足
 		$Json['info']['choices']	= count($AppIdElected);
 		$loadRows					= $loadMax - count($AppIdElected);
 		if( $loadRows>0 ){
-			$Tab					= $Ado->SelectLimit("SELECT val_no FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
+			$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
 			if( !empty($Tab) ){
 				foreach($Tab as $Rs){
-					if( !in_array($Rs['val_no'],$AppIdElected) ){
-						$AppIdElected[]				= $Rs['val_no'];
-						$Json['info']['supplement'] = $Json['info']['supplement']+1;
+					if( !isset($AppIdElected[$Rs['val_no']]) ){
+						$AppIdElected[$Rs['val_no']]	= $Rs['val_grade'];
+						$Json['info']['supplement'] 	= $Json['info']['supplement']+1;
 					}
 				}
 			}
@@ -584,12 +593,35 @@ switch($Action){
 		$Json['info']['elected']	= count($AppIdElected);
 		
 		
+		
+		
+		
+		
+		
+		
+		
 		//待选池载入完毕,开始随机选择数据
+		arsort($AppIdElected);
+		if( !empty($AppIdElected) ){
+			$RandInt	= 0;
+			foreach($AppIdElected as $Vs=>$Rs){
+				$RandInt		   += $Rs+1;
+				$AppIdElected[$Vs]	= $RandInt;
+			}
+		}
+		unset($RandInt);
 		if( $loadSize>=count($AppIdElected) ){
-			$AppIdChoice		= $AppIdElected;
+			$AppIdChoice		= array_keys($AppIdElected);
 		}else{
 			while( count($AppIdChoice)<$loadSize  ){
-				$ChoiceID		= $AppIdElected[ rand(0,count($AppIdElected)-1) ];
+				//随机一个数字
+				end($AppIdElected);
+				$RandInt		= rand(0,current($AppIdElected));
+				
+				//根据该随机数字获得选中的ID
+				foreach($AppIdElected as $Vs=>$Rs){
+					if( $RandInt <= ceil($Rs) )   {$ChoiceID	= $Vs;break;}
+				}
 				if( !in_array($ChoiceID, $AppIdChoice) ){
 					$AppIdChoice[]	= $ChoiceID;
 				}
