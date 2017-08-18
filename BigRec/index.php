@@ -7,6 +7,12 @@ $Ado				= ADOPdo::Start();
 $NoPreg				= '/^[a-z0-9-_]{1,50}$/i';
 $NoUserPreg			= '/^u-[a-z0-9]{30,30}$/i';
 
+// $EchoSize		= ob_get_length();
+// header("Content-Length: {$EchoSize}");  //告诉浏览器数据长度,浏览器接收到此长度数据后就不再接收数据
+// header("Connection: Close");      		//告诉浏览器关闭当前连接,即为短连接
+// ob_flush();
+// flush();
+
 SyncApp();
 
 
@@ -14,14 +20,22 @@ SyncApp();
 $loadMaxPer				= 10;
 //冷启动的 启用标准,以申报记录为准数字
 $loadStartZero			= 100;
-//待选的ID池
+//多样性保持基数：当用户获取条数低于该条数时，用户多样性将失效，请注意设置阀值,如果设置为0则关闭该功能
+//多样性：为了防止用户一段时间关注内容过于集中，所以当用户获取条数高于阀值，则会在待选池中加入10%的用户关注之外的最热门标签内容，最终选择池出现几率不定。
+//注意，该功能在冷启动下无效
+$loadNonUniqueMini		= 5;
+
+
+
+//待选池		待选的ID池
 $AppIdElected			= array();
-//已经选择的ID池
+//选择池     	已经选择的ID池
 $AppIdChoice			= array();
 //选择池所需记录总数
-$loadSize				= ( preg_match('/^[0-9]+$/i',$Arr['size'])&&ceil($Arr['size'])>1&&ceil($Arr['size'])<101)? ceil($Arr['size']) : 10;
+$loadSize				= 10;
 //待选池所需记录总数
 $loadMax				= $loadSize * $loadMaxPer;
+
 
 
 
@@ -341,6 +355,11 @@ switch($Action){
 		
 		unset($Arr['app_key']);
 		
+		//选择池所需记录总数
+		$loadSize				= ( preg_match('/^[0-9]+$/i',$Arr['size'])&&ceil($Arr['size'])>1&&ceil($Arr['size'])<101)? ceil($Arr['size']) : 10;
+		//待选池所需记录总数
+		$loadMax				= $loadSize * $loadMaxPer;
+		
 		$AppRow					= $Ado->GetRow("SELECT * FROM big_app_cache WHERE app_id={$Arr['app_id']}");
 		
 		
@@ -361,6 +380,8 @@ switch($Action){
 		$Json['info']['choices']	= 0;
 		//设定数据选择的方式方法
 		$Json['info']['choice'] 	= array();
+		//待选池出现过的标签
+		$ElectedTags				= array();
 		
 		
 		
@@ -394,7 +415,7 @@ switch($Action){
 		 * 最后，如果获取记录总数不等于 待选池所需总数,则以资料更新时间倒叙获取 差数，填充直到满足  待选池所需总数
 		 */
 		if( ceil($AppRow['app_total_declaration'])<$loadStartZero && $loadMax-count($AppIdElected)>0 ){
-			$TagTab				= $Ado->GetAll("SELECT * FROM big_app_tags WHERE app_id={$Arr['app_id']}");
+			$TagTab							= $Ado->GetAll("SELECT * FROM big_app_tags WHERE app_id={$Arr['app_id']}");
 			
 			//标签池无任何资料
 			if( empty($TagTab) ){
@@ -477,16 +498,19 @@ switch($Action){
 						
 						$Page					= $Page+1;
 						$Lim					= ($Page-1)*$Size;
-						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
+						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade,val_tags FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
 						if( !empty($Tab) ){
 							foreach($Tab as $Rss){
 								if( !isset($AppIdElected[$Rss['val_no']]) ){
 									$AppIdElected[ $Rss['val_no'] ]	= $Rss['val_grade'];
 									$TagsChoice++;
+									
+									$Tmp		= explode(",", $Rss['val_tags']);
+									$ElectedTags= ( !empty($Tmp) )? array_merge($ElectedTags,$Tmp) : $ElectedTags;
 								}
 							}
 						}
-						unset($Tab,$Rss);
+						unset($Tab,$Rss,$Tmp);
 					}
 				}
 			}
@@ -555,16 +579,19 @@ switch($Action){
 						
 						$Page					= $Page+1;
 						$Lim					= ($Page-1)*$Size;
-						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
+						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade,val_tags FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
 						if( !empty($Tab) ){
 							foreach($Tab as $Rss){
 								if( !isset($AppIdElected[$Rss['val_no']]) ){
 									$AppIdElected[ $Rss['val_no'] ]	= $Rss['val_grade'];
 									$TagsChoice++;
+									
+									$Tmp		= explode(",", $Rss['val_tags']);
+									$ElectedTags= ( !empty($Tmp) )? array_merge($ElectedTags,$Tmp) : $ElectedTags;
 								}
 							}
 						}
-						unset($Tab,$Rss);
+						unset($Tab,$Rss,$Tmp);
 					}
 				}
 			}
@@ -579,7 +606,7 @@ switch($Action){
 		$Json['info']['choices']	= count($AppIdElected);
 		$loadRows					= $loadMax - count($AppIdElected);
 		if( $loadRows>0 ){
-			$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
+			$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM big_value WHERE app_id={$AppRow['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
 			if( !empty($Tab) ){
 				foreach($Tab as $Rs){
 					if( !isset($AppIdElected[$Rs['val_no']]) ){
@@ -595,7 +622,45 @@ switch($Action){
 		
 		
 		
-		
+		//如果多样性数据小于等于加载需求数据,则启动多样性功能,加入类型热推
+		if( $loadNonUniqueMini <= ($loadSize+count($TopChoice)) && $loadNonUniqueMini>0 ){
+			$Json['info']['nonunique']		= 0;
+			$NotTags						= $Ado->GetAll("SELECT * FROM big_app_tags WHERE app_id={$AppRow['app_id']} AND app_tags NOT IN (".FunToString($ElectedTags,",","'").")");
+			
+			if( !empty($NotTags) ){
+				$ElectedTags				= array();
+				$EndTime					= date("Y-m-d H:i:s",time()-86400*$AppRow['app_reco_data']);
+				$NotMax						= ceil($loadMax * 0.1);
+				$TagsChoice					= 0;
+				
+				foreach($NotTags as $Rs){
+					$Page					= 0;
+					$Lim					= 0;
+					$Sum					= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE app_id={$AppRow['app_id']} AND  find_in_set('{$Rs['app_tags']}',val_tags)");
+					$Size					= 100;
+					
+					if( $TagsChoice>$NotMax )break;
+					while( $Lim<$Sum && $Lim<$NotMax ){
+						$Page					= $Page+1;
+						$Lim					= ($Page-1)*$Size;
+						$Tab					= $Ado->SelectLimit("SELECT val_no FROM `big_value` WHERE app_id={$AppRow['app_id']} AND  find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
+						if( !empty($Tab) ){
+							foreach($Tab as $Rss){
+								if( !isset($AppIdElected[$Rss['val_no']]) ){
+									$AppIdElected[ $Rss['val_no'] ]	= 1;
+									$Json['info']['nonunique']++;
+								}
+							}
+						}
+						
+						if( $TagsChoice>$NotMax )break;
+					}
+					
+					unset($Tab,$Rss);
+				}
+			}
+			
+		}
 		
 		
 		
@@ -638,14 +703,15 @@ switch($Action){
 			unset($TopChoice,$TopChoiceID);
 		}
 		
+		
 		//根据选择池加载资料列表
 		$Tab					= $Ado->GetAll("SELECT * FROM big_value WHERE app_id={$Arr['app_id']} AND val_no IN (".FunToString($AppIdChoice,",","'").")");
 		$Json['status']			= true;
 		$Json['error']			= '';
 		$Json['val']			= $Tab;
 		
-		$New					= array();
 		
+		$New					= array();
 		if( !empty($Tab) ){
 			foreach($AppIdChoice as $Rs){
 				$Tr							= array();

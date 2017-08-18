@@ -21,7 +21,7 @@ function __autoload( $ClassName ){
 /**
  * 初始化数据库连接
  */
-if( ADOPdo::Start(DATABASE_HOST,DATABASE_USER,DATABASE_PASS,DATABASE_NAME)===false ){
+if( ADOPdo::Start(DATABASE_HOST,DATABASE_USER,DATABASE_PASS,DATABASE_NAME,true)===false ){
 	header("Location: error.php?code=mysql_connect_error&err=". urlencode("连接数据库出错,请联系管理员") );exit;
 }
 

@@ -65,7 +65,7 @@ error_reporting(0);
 </table>
 </form>
 <br>
-<form name="form1" method="post" action="./?act=user_modify" target="_blank">
+<form id="user_form" method="post" action="./?act=user_modify" onsubmit="user_post()">
   <table width="400" border="0" cellpadding="5" cellspacing="1" bgcolor="#666666">
   	<input type="hidden" name="app_id" value="1">
   	<input type="hidden" name="app_password" value="123456">
@@ -95,7 +95,7 @@ error_reporting(0);
         </td>
     </tr>
 	<tr>
-	  <td colspan="2" align="center" bgcolor="#F6F6F6"><input type="submit" name="button" id="button" value="提交"></td>
+	  <td colspan="2" align="center" bgcolor="#F6F6F6"><input type="button" name="button" id="button" value="提交" onclick="user_post()"></td>
     </tr>
 </table>
 </form>
@@ -122,8 +122,8 @@ function reco(){
 
 function reco_up(ID,Tag){
 	URL = "./?act=up&app_id=1&app_key=123412&user_no=<?php echo $_GET['user_no']?>&val_no="+ID+"&val_tags="+Tag;
-	$.get(URL,function(){
-		
+	$.get(URL,function(Json){
+		if( Json['status']==false ) alert(Json['error']);
 	},'json');
 }
 
@@ -149,14 +149,27 @@ function data_pus( Sum ){
 		    type: 'post',
 		    url: './?act=data_modify',
 		    data: $("#data_modify").serialize(),
-		    success: function(data) {
-			    
+		    success: function(Json) {
+			    if( Json['status']==false ) alert(Json['error']);
 		    }
 		});
 	}
 	return false;
 }
 
+function user_post(){
+	
+	$.ajax({
+	    type: 'post',
+	    url: './?act=user_modify',
+	    data: $("#user_form").serialize(),
+	    success: function(Json) {
+		    if( Json['status']==false ) alert(Json['error']);
+	    }
+	});
+	
+	return false;
+}
 reco();
 </script>
 </body>

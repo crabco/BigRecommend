@@ -2,7 +2,7 @@
 /**
  * 2016-12-02 更新Autoalter无法自动更新字段功能
  * 2017-03-17 支持持久化常连接
- * 
+ * 2017-08-17 修正 持久化连接问题
 对象：ADOPdo
 本对象使用PHP PDO 接口，实现数据库的一些操作
 
@@ -36,10 +36,10 @@ class ADOPdo{
 	
     private static $StaticAdodbObject = null;
     
-    public static function Start($Host='',$User='',$Pass='',$Name=''){
+    public static function Start($Host='',$User='',$Pass='',$Name='',$OpenType=true){
     	if( self::$StaticAdodbObject==null && $Host!="" && $User!="" && $Pass!="" ){
     		self::$StaticAdodbObject = new ADOPdo("mysql");
-    		self::$StaticAdodbObject->Connect($Host, $User, $Pass, $Name);
+    		self::$StaticAdodbObject->Connect($Host, $User, $Pass, $Name,$OpenType);
     	}
     	
     	if( is_object(self::$StaticAdodbObject) )return self::$StaticAdodbObject;
@@ -57,7 +57,7 @@ class ADOPdo{
 
 
     //////////////////////////////////////////////////////////
-    public function Connect($http,$user,$pass,$name='',$longopen=false){
+    public function Connect($http,$user,$pass,$name='',$longopen=true){
     	
     	if( $longopen==true ){
     		$open	= array(PDO::ATTR_PERSISTENT => true);
