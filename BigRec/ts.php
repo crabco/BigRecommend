@@ -34,27 +34,27 @@ error_reporting(0);
     </tr>
 	<tr>
 	  <td bgcolor="#FFFFFF">产品编号</td>
-	  <td bgcolor="#FFFFFF"><input type="text" name="val_no" style="width:90%" id="val_no" value="<?php echo $_POST['val_no']?>"></td>
+	  <td bgcolor="#FFFFFF"><input type="text" name="pro_no" style="width:90%" id="pro_no" value="<?php echo $_POST['pro_no']?>"></td>
     </tr>
 	<tr>
 		<td width="75" bgcolor="#FFFFFF">产品名称</td>
 		<td width="302" bgcolor="#FFFFFF">
-		  <label for="val_name"></label>
-		  <input type="text" name="val_name" style="width:90%" id="val_name" value="<?php echo $_POST['val_name']?>">
+		  <label for="pro_name"></label>
+		  <input type="text" name="pro_name" style="width:90%" id="pro_name" value="<?php echo $_POST['pro_name']?>">
 	    </td>
 	</tr>
 	<tr>
 	  <td bgcolor="#FFFFFF">封面图片</td>
-	  <td bgcolor="#FFFFFF"><input type="text" style="width:90%" name="val_cover" id="val_cover" value="<?php echo $_POST['val_cover']?>"></td>
+	  <td bgcolor="#FFFFFF"><input type="text" style="width:90%" name="pro_cover" id="pro_cover" value="<?php echo $_POST['pro_cover']?>"></td>
   </tr>
 	<tr>
 	  <td bgcolor="#FFFFFF">标签分类</td>
-	  <td bgcolor="#FFFFFF"><input type="text" style="width:90%" name="val_tags" id="val_tags" value="<?php echo $_POST['val_tags']?>"></td>
+	  <td bgcolor="#FFFFFF"><input type="text" style="width:90%" name="pro_tags" id="pro_tags" value="<?php echo $_POST['pro_tags']?>"></td>
     </tr>
 	<tr>
 	  <td bgcolor="#FFFFFF">是否显示</td>
-	  <td bgcolor="#FFFFFF"><input name="val_show" type="radio" id="val_show" value="true">是 
-        <input name="val_show" type="radio" id="val_show" value="false">否</td>
+	  <td bgcolor="#FFFFFF"><input name="pro_show" type="radio" id="pro_show" value="true">是 
+        <input name="pro_show" type="radio" id="pro_show" value="false">否</td>
     </tr>
 	<tr>
 	  <td colspan="2" align="center" bgcolor="#F6F6F6">
@@ -79,7 +79,7 @@ error_reporting(0);
 	<tr>
 		<td width="75" bgcolor="#FFFFFF">用户年龄</td>
 		<td width="302" bgcolor="#FFFFFF">
-		  <label for="val_name"></label>
+		  <label for="pro_name"></label>
 		  <input type="text" name="user_age" style="width:90%" value="<?php echo $_POST['user_age']?>">
 	    </td>
 	</tr>
@@ -107,7 +107,7 @@ function reco(){
 		var ValTab = '';
 		for(var i=0;i<Json['val'].length;i++){
 			var Val	= Json['val'][i];
-			ValTab += "<a href='javascript:' onclick=\"reco_up('"+Val['val_no']+"','"+Val['val_tags']+"')\">"+Val['val_name']+"</a><br>";
+			ValTab += "<a href='javascript:' onclick=\"reco_up('"+Val['pro_no']+"','"+Val['pro_tags']+"')\">"+Val['pro_name']+"</a><br>";
 		}
 		
 		ValTab += "<br>推荐方式:<br>";
@@ -121,7 +121,7 @@ function reco(){
 }
 
 function reco_up(ID,Tag){
-	URL = "./?act=up&app_id=1&app_key=123412&user_no=<?php echo $_GET['user_no']?>&val_no="+ID+"&val_tags="+Tag;
+	URL = "./?act=up&app_id=1&app_key=123412&user_no=<?php echo $_GET['user_no']?>&pro_no="+ID+"&pro_tags="+Tag;
 	$.get(URL,function(Json){
 		if( Json['status']==false ) alert(Json['error']);
 	},'json');
@@ -134,15 +134,15 @@ var ValNo	= "";
 function data_pus( Sum ){
 
 	if( ValName=="" ){
-		ValName = $("#val_name").val();
-		ValNo	= $("#val_no").val();
+		ValName = $("#pro_name").val();
+		ValNo	= $("#pro_no").val();
 	}
 	
 	for(i=0;i<Sum;i++){
 		if( Sum>1 ){
 			PushInt	= parseInt(PushInt)+1;
-			$("#val_name").val( ValName + PushInt )
-			$("#val_no").val( 	ValNo + PushInt );
+			$("#pro_name").val( ValName + PushInt )
+			$("#pro_no").val( 	ValNo + PushInt );
 		}
 		
 		$.ajax({

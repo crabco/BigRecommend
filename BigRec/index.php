@@ -262,9 +262,9 @@ switch($Action){
 	/**
 	 * 1.5	统计资料添加|修改接口
 	 */
-	case "data_modify":
+	case "pro_modify":
 		
-		$Arr					= LoadData('app_id,app_password,val_no,val_name,val_cover,val_tags,val_show,val_grade');
+		$Arr					= LoadData('app_id,app_password,pro_no,pro_name,pro_cover,pro_tags,pro_show,pro_grade');
 		$ExistsApp				= ExistsApp($Arr['app_id'], $Arr['app_password']);
 		if( $ExistsApp!==true ){
 			$Json				= $ExistsApp;
@@ -272,14 +272,14 @@ switch($Action){
 		}
 		unset($Arr['app_password']);
 		
-		if( isset($Arr['val_grade'])&&!empty($Arr['val_grade'])&&(ceil($Arr['val_grade'])<0||ceil($Arr['val_grade'])>9 ) ){
+		if( isset($Arr['pro_grade'])&&!empty($Arr['pro_grade'])&&(ceil($Arr['pro_grade'])<0||ceil($Arr['pro_grade'])>9 ) ){
 			$Json['status']		= false;
 			$Json['error']		= '显示权重数据非法';
 			break;
 		}
 		
 		//添加标签资料
-		$TagArr					= explode(",", $Arr['val_tags']);
+		$TagArr					= explode(",", $Arr['pro_tags']);
 		if( empty($TagArr) ){
 			$Json['status']		= false;
 			$Json['error']		= '资料必须要有标签';
@@ -292,7 +292,7 @@ switch($Action){
 			}
 		}
 		
-		$Arr['val_time_update']	= date("Y-m-d H:i:s");
+		$Arr['pro_time_update']	= date("Y-m-d H:i:s");
 		
 		$Row					= ParseArray($Arr);
 		$RowName				= implode(",", $Row['name']);
@@ -319,8 +319,8 @@ switch($Action){
 	/**
 	 * 1.6	统计资料移除接口
 	 */
-	case "data_remove":
-		$Arr					= LoadData('app_id,app_password,val_no');
+	case "pro_remove":
+		$Arr					= LoadData('app_id,app_password,pro_no');
 		
 		$ExistsApp				= ExistsApp($Arr['app_id'], $Arr['app_password']);
 		if( $ExistsApp!==true ){
@@ -329,7 +329,7 @@ switch($Action){
 		}
 		unset($Arr['app_password']);
 		
-		$Ado->Execute("DELETE FROM big_value WHERE val_no={$Arr['val_no']} AND app_id={$Arr['app_id']}");
+		$Ado->Execute("DELETE FROM big_value WHERE pro_no={$Arr['pro_no']} AND app_id={$Arr['app_id']}");
 		
 		$Json['status']			= true;
 		$Json['error']			= '';
@@ -400,7 +400,7 @@ switch($Action){
 		
 		
 		//固定搜索权限为9的数据
-		$TopChoice							= $Ado->SelectLimit("SELECT * FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' AND val_grade=9 ORDER BY val_time_update DESC",$loadSize);
+		$TopChoice							= $Ado->SelectLimit("SELECT * FROM big_value WHERE app_id={$Arr['app_id']} AND pro_show='true' AND pro_grade=9 ORDER BY pro_time_update DESC",$loadSize);
 		if( !empty($TopChoice) ){
 			$loadSize						= ceil( $loadSize - count($TopChoice) );
 			$loadSize						= ( $loadSize>0 )? $loadSize : 0;
@@ -429,10 +429,10 @@ switch($Action){
 				//有资料,则根据标签个数平均分配每个标签获取的条数
 				$loadRows					= ceil( $loadMax/count($TagTab) );
 				foreach($TagTab as $Rs){
-					$RsAll					= $Ado->SelectLimit("SELECT val_no,val_grade FROM big_value WHERE app_id={$Arr['app_id']} AND val_show='true' AND find_in_set('{$Rs}',val_tags) ORDER BY val_grade DESC",$loadRows);
+					$RsAll					= $Ado->SelectLimit("SELECT pro_no,pro_grade FROM big_value WHERE app_id={$Arr['app_id']} AND pro_show='true' AND find_in_set('{$Rs}',pro_tags) ORDER BY pro_grade DESC",$loadRows);
 					if( !empty($RsAll) ){
 					foreach($RsAll as $Rss){
-						$AppIdElected[$Rss['val_no']]		= $Rss['val_grade'];
+						$AppIdElected[$Rss['pro_no']]		= $Rss['pro_grade'];
 					}
 					}
 				}
@@ -454,8 +454,8 @@ switch($Action){
 			
 			//搜索用户最热门的标签
 			$EndTime					= date("Y-m-d H:i:s",time()-86400*$AppRow['app_reco_data']);
-			$SQL						= "SELECT val_tags,COUNT(app_id) AS val_tags_num FROM `big_declaration` WHERE user_time_create>'{$EndTime}' AND user_no='{$UserNo}' GROUP BY val_tags ORDER BY val_tags_num";
-			$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_declaration` WHERE user_time_create>'{$EndTime}' AND user_no='{$UserNo}' GROUP BY val_tags ");
+			$SQL						= "SELECT pro_tags,COUNT(app_id) AS pro_tags_num FROM `big_declaration` WHERE user_time_create>'{$EndTime}' AND user_no='{$UserNo}' GROUP BY pro_tags ORDER BY pro_tags_num";
+			$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_declaration` WHERE user_time_create>'{$EndTime}' AND user_no='{$UserNo}' GROUP BY pro_tags ");
 			$Tags						= array();
 			$Lim						= 0;
 			
@@ -466,13 +466,13 @@ switch($Action){
 					
 				if( !empty($Tab) ){
 					foreach($Tab as $Rs){
-						$TagsArr			= explode(",", $Rs['val_tags']);
+						$TagsArr			= explode(",", $Rs['pro_tags']);
 						if( !empty($TagsArr) ){
 							foreach($TagsArr as $Rss){
 								if( !in_array($Rss, $Tags) ){
-									$Tags[$Rss]	= ceil($Rs['val_tags_num']);
+									$Tags[$Rss]	= ceil($Rs['pro_tags_num']);
 								}else{
-									$Tags[$Rss]	= ceil($Tags[$Rss]) + ceil($Rs['val_tags_num']);
+									$Tags[$Rss]	= ceil($Tags[$Rss]) + ceil($Rs['pro_tags_num']);
 								}
 							}
 						}
@@ -488,7 +488,7 @@ switch($Action){
 				foreach($Tags as $Tag=>$Rs){
 					$Page						= 0;
 					$Lim						= 0;
-					$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE find_in_set('{$Tag}',val_tags)");
+					$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE find_in_set('{$Tag}',pro_tags)");
 					
 					
 					//按照标签热门程度比例进行加载总数的比例设定
@@ -498,14 +498,14 @@ switch($Action){
 						
 						$Page					= $Page+1;
 						$Lim					= ($Page-1)*$Size;
-						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade,val_tags FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
+						$Tab					= $Ado->SelectLimit("SELECT pro_no,pro_grade,pro_tags FROM `big_value` WHERE pro_show='true' AND find_in_set('{$Tag}',pro_tags) ORDER BY pro_time_update DESC", $Size, $Lim);
 						if( !empty($Tab) ){
 							foreach($Tab as $Rss){
-								if( !isset($AppIdElected[$Rss['val_no']]) ){
-									$AppIdElected[ $Rss['val_no'] ]	= $Rss['val_grade'];
+								if( !isset($AppIdElected[$Rss['pro_no']]) ){
+									$AppIdElected[ $Rss['pro_no'] ]	= $Rss['pro_grade'];
 									$TagsChoice++;
 									
-									$Tmp		= explode(",", $Rss['val_tags']);
+									$Tmp		= explode(",", $Rss['pro_tags']);
 									$ElectedTags= ( !empty($Tmp) )? array_merge($ElectedTags,$Tmp) : $ElectedTags;
 								}
 							}
@@ -535,8 +535,8 @@ switch($Action){
 			
 			//搜索附近最热门的标签
 			$EndTime					= date("Y-m-d H:i:s",time()-86400*$AppRow['app_reco_data']);
-			$SQL						= "SELECT val_tags,ABS(user_ip - {$User['user_ip']}) AS user_ips,COUNT(app_id) AS val_tags_num FROM `big_declaration` WHERE user_time_create>'{$EndTime}' GROUP BY val_tags ORDER BY user_ips DESC";
-			$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_declaration` WHERE user_time_create>'{$EndTime}' GROUP BY val_tags ");
+			$SQL						= "SELECT pro_tags,ABS(user_ip - {$User['user_ip']}) AS user_ips,COUNT(app_id) AS pro_tags_num FROM `big_declaration` WHERE user_time_create>'{$EndTime}' GROUP BY pro_tags ORDER BY user_ips DESC";
+			$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_declaration` WHERE user_time_create>'{$EndTime}' GROUP BY pro_tags ");
 			$Tags						= array();
 			$Lim						= 0;
 			
@@ -547,13 +547,13 @@ switch($Action){
 				
 				if( !empty($Tab) ){
 				foreach($Tab as $Rs){
-					$TagsArr			= explode(",", $Rs['val_tags']);
+					$TagsArr			= explode(",", $Rs['pro_tags']);
 					if( !empty($TagsArr) ){
 					foreach($TagsArr as $Rss){
 						if( !in_array($Rss, $Tags) ){
-							$Tags[$Rss]	= ceil($Rs['val_tags_num']);
+							$Tags[$Rss]	= ceil($Rs['pro_tags_num']);
 						}else{
-							$Tags[$Rss]	= ceil($Tags[$Rss]) + ceil($Rs['val_tags_num']);
+							$Tags[$Rss]	= ceil($Tags[$Rss]) + ceil($Rs['pro_tags_num']);
 						}
 					}
 					}
@@ -569,7 +569,7 @@ switch($Action){
 				foreach($Tags as $Tag=>$Rs){
 					$Page						= 0;
 					$Lim						= 0;
-					$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE find_in_set('{$Tag}',val_tags)");
+					$Sum						= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE find_in_set('{$Tag}',pro_tags)");
 					
 					
 					//按照标签热门程度比例进行加载总数的比例设定
@@ -579,14 +579,14 @@ switch($Action){
 						
 						$Page					= $Page+1;
 						$Lim					= ($Page-1)*$Size;
-						$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade,val_tags FROM `big_value` WHERE val_show='true' AND find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
+						$Tab					= $Ado->SelectLimit("SELECT pro_no,pro_grade,pro_tags FROM `big_value` WHERE pro_show='true' AND find_in_set('{$Tag}',pro_tags) ORDER BY pro_time_update DESC", $Size, $Lim);
 						if( !empty($Tab) ){
 							foreach($Tab as $Rss){
-								if( !isset($AppIdElected[$Rss['val_no']]) ){
-									$AppIdElected[ $Rss['val_no'] ]	= $Rss['val_grade'];
+								if( !isset($AppIdElected[$Rss['pro_no']]) ){
+									$AppIdElected[ $Rss['pro_no'] ]	= $Rss['pro_grade'];
 									$TagsChoice++;
 									
-									$Tmp		= explode(",", $Rss['val_tags']);
+									$Tmp		= explode(",", $Rss['pro_tags']);
 									$ElectedTags= ( !empty($Tmp) )? array_merge($ElectedTags,$Tmp) : $ElectedTags;
 								}
 							}
@@ -606,11 +606,11 @@ switch($Action){
 		$Json['info']['choices']	= count($AppIdElected);
 		$loadRows					= $loadMax - count($AppIdElected);
 		if( $loadRows>0 ){
-			$Tab					= $Ado->SelectLimit("SELECT val_no,val_grade FROM big_value WHERE app_id={$AppRow['app_id']} AND val_show='true' ORDER BY val_time_update DESC",$loadRows);
+			$Tab					= $Ado->SelectLimit("SELECT pro_no,pro_grade FROM big_value WHERE app_id={$AppRow['app_id']} AND pro_show='true' ORDER BY pro_time_update DESC",$loadRows);
 			if( !empty($Tab) ){
 				foreach($Tab as $Rs){
-					if( !isset($AppIdElected[$Rs['val_no']]) ){
-						$AppIdElected[$Rs['val_no']]	= $Rs['val_grade'];
+					if( !isset($AppIdElected[$Rs['pro_no']]) ){
+						$AppIdElected[$Rs['pro_no']]	= $Rs['pro_grade'];
 						$Json['info']['supplement'] 	= $Json['info']['supplement']+1;
 					}
 				}
@@ -636,18 +636,18 @@ switch($Action){
 				foreach($NotTags as $Rs){
 					$Page					= 0;
 					$Lim					= 0;
-					$Sum					= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE app_id={$AppRow['app_id']} AND  find_in_set('{$Rs['app_tags']}',val_tags)");
+					$Sum					= $Ado->GetOne("SELECT count(app_id) FROM `big_value` WHERE app_id={$AppRow['app_id']} AND  find_in_set('{$Rs['app_tags']}',pro_tags)");
 					$Size					= 100;
 					
 					if( $TagsChoice>$NotMax )break;
 					while( $Lim<$Sum && $Lim<$NotMax ){
 						$Page					= $Page+1;
 						$Lim					= ($Page-1)*$Size;
-						$Tab					= $Ado->SelectLimit("SELECT val_no FROM `big_value` WHERE app_id={$AppRow['app_id']} AND  find_in_set('{$Tag}',val_tags) ORDER BY val_time_update DESC", $Size, $Lim);
+						$Tab					= $Ado->SelectLimit("SELECT pro_no FROM `big_value` WHERE app_id={$AppRow['app_id']} AND  find_in_set('{$Tag}',pro_tags) ORDER BY pro_time_update DESC", $Size, $Lim);
 						if( !empty($Tab) ){
 							foreach($Tab as $Rss){
-								if( !isset($AppIdElected[$Rss['val_no']]) ){
-									$AppIdElected[ $Rss['val_no'] ]	= 1;
+								if( !isset($AppIdElected[$Rss['pro_no']]) ){
+									$AppIdElected[ $Rss['pro_no'] ]	= 1;
 									$Json['info']['nonunique']++;
 								}
 							}
@@ -697,7 +697,7 @@ switch($Action){
 		if( !empty($TopChoice) ){
 			$TopChoiceID			= array();
 			foreach($TopChoice as $Rs){
-				$TopChoiceID[]		= $Rs['val_no'];
+				$TopChoiceID[]		= $Rs['pro_no'];
 			}
 			$AppIdChoice			= array_merge($TopChoiceID,$AppIdChoice);
 			unset($TopChoice,$TopChoiceID);
@@ -705,7 +705,7 @@ switch($Action){
 		
 		
 		//根据选择池加载资料列表
-		$Tab					= $Ado->GetAll("SELECT * FROM big_value WHERE app_id={$Arr['app_id']} AND val_no IN (".FunToString($AppIdChoice,",","'").")");
+		$Tab					= $Ado->GetAll("SELECT * FROM big_value WHERE app_id={$Arr['app_id']} AND pro_no IN (".FunToString($AppIdChoice,",","'").")");
 		$Json['status']			= true;
 		$Json['error']			= '';
 		$Json['val']			= $Tab;
@@ -717,7 +717,7 @@ switch($Action){
 				$Tr							= array();
 				$Tr['app_id']				= $Arr['app_id'];
 				$Tr['user_no']				= $UserNo;
-				$Tr['val_no']				= $Rs;
+				$Tr['pro_no']				= $Rs;
 				$Tr['user_ip']				= $User['user_ip'];
 				$Tr['user_brower']			= $User['user_brower'];
 				$Tr['user_os']				= $User['user_os'];
@@ -741,7 +741,7 @@ switch($Action){
 	 * 2.2	访问统计接口
 	 */
 	case "stat":
-		$Arr					= LoadData('app_id,app_key,user_no,val_no');
+		$Arr					= LoadData('app_id,app_key,user_no,pro_no');
 		
 		$ExistsApp				= ExistsApp($Arr['app_id'],null,$Arr['app_key']);
 		if( $ExistsApp!==true ){
@@ -761,7 +761,7 @@ switch($Action){
 	 * 2.3	访问上报接口
 	 */
 	case "up":
-		$Arr					= LoadData('app_id,app_key,user_no,val_no,val_tags','get');
+		$Arr					= LoadData('app_id,app_key,user_no,pro_no,pro_tags','get');
 		$Cok					= LoadData('bigrec_userno','cookie');
 		
 		$ExistsApp				= ExistsApp($Arr['app_id'],null,$Arr['app_key']);
@@ -771,7 +771,7 @@ switch($Action){
 		}
 		unset($Arr['app_key']);
 		
-		if( !preg_match($NoPreg, $Arr['val_no']) ){
+		if( !preg_match($NoPreg, $Arr['pro_no']) ){
 			$Json['status']		= false;
 			$Json['error']		= '申报资料序号错误';
 			break;
@@ -785,7 +785,7 @@ switch($Action){
 		}
 		
 		//如果没有上报标签,则报错
-		if( empty($Arr['val_tags']) ){
+		if( empty($Arr['pro_tags']) ){
 			$Json['status']		= false;
 			$Json['error']		= '上报资料不全';
 			break;

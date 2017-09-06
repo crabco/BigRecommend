@@ -58,7 +58,7 @@ DROP TABLE IF EXISTS `big_declaration`;
 CREATE TABLE `big_declaration` (
   `app_id` int(10) unsigned DEFAULT NULL COMMENT '应用序号',
   `user_id` int(11) unsigned DEFAULT NULL COMMENT '推荐的用户序号',
-  `val_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
+  `pro_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
   `user_ip` int(10) DEFAULT NULL COMMENT '用户当前的IP地址，通过IPLONG方法转换为数字',
   `user_brower` varchar(20) DEFAULT NULL COMMENT '用户的浏览器',
   `user_time_create` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '资料创建时间'
@@ -75,7 +75,7 @@ DROP TABLE IF EXISTS `big_reocmmend`;
 CREATE TABLE `big_reocmmend` (
   `app_id` int(10) unsigned DEFAULT NULL COMMENT '应用序号',
   `user_id` int(11) unsigned DEFAULT NULL COMMENT '推荐的用户序号',
-  `val_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
+  `pro_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
   `user_ip` int(10) DEFAULT NULL COMMENT '用户当前的IP地址，通过IPLONG方法转换为数字',
   `user_brower` varchar(20) DEFAULT NULL COMMENT '用户的浏览器',
   `user_time_create` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '资料创建时间'
@@ -108,7 +108,7 @@ CREATE TABLE `big_report_declaration` (
   `report_id` int(11) unsigned DEFAULT NULL COMMENT '报表序号',
   `app_id` int(10) unsigned DEFAULT NULL COMMENT '应用序号',
   `user_id` int(11) unsigned DEFAULT NULL COMMENT '推荐的用户序号',
-  `val_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
+  `pro_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
   `user_ip` int(10) DEFAULT NULL COMMENT '用户当前的IP地址，通过IPLONG方法转换为数字',
   `user_brower` varchar(20) DEFAULT NULL COMMENT '用户的浏览器',
   `user_time_create` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '资料创建时间'
@@ -126,7 +126,7 @@ CREATE TABLE `big_report_reocmmend` (
   `report_id` int(11) unsigned DEFAULT NULL COMMENT '报表序号',
   `app_id` int(10) unsigned DEFAULT NULL COMMENT '应用序号',
   `user_id` int(11) unsigned DEFAULT NULL COMMENT '推荐的用户序号',
-  `val_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
+  `pro_no` varchar(32) DEFAULT NULL COMMENT '推荐的资料序号',
   `user_ip` int(10) DEFAULT NULL COMMENT '用户当前的IP地址，通过IPLONG方法转换为数字',
   `user_brower` varchar(20) DEFAULT NULL COMMENT '用户的浏览器',
   `user_time_create` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '资料创建时间'
@@ -163,11 +163,11 @@ CREATE TABLE `big_user` (
 DROP TABLE IF EXISTS `big_value`;
 CREATE TABLE `big_value` (
   `app_id` int(10) unsigned DEFAULT NULL COMMENT '应用序号',
-  `val_no` varchar(32) DEFAULT NULL COMMENT '资料编号',
-  `val_name` varchar(50) DEFAULT NULL COMMENT '资料名称',
-  `val_tags` tinytext COMMENT '资料标签,英文逗号分割多个',
-  `val_show` enum('true','false') DEFAULT 'true' COMMENT '资料是否参与统计',
-  KEY `val_no` (`app_id`,`val_no`)
+  `pro_no` varchar(32) DEFAULT NULL COMMENT '资料编号',
+  `pro_name` varchar(50) DEFAULT NULL COMMENT '资料名称',
+  `pro_tags` tinytext COMMENT '资料标签,英文逗号分割多个',
+  `pro_show` enum('true','false') DEFAULT 'true' COMMENT '资料是否参与统计',
+  KEY `pro_no` (`app_id`,`pro_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
