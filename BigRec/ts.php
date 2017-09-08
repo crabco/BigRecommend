@@ -1,14 +1,13 @@
 <?php
 ini_set("display_errors", "off");
 error_reporting(0);
-
-
 ?>
 <html>
 <title>测试页面 </title>
 <meta charset="utf-8"/>
 <head>
-<script src="http://libs.baidu.com/jquery/2.1.1/jquery.min.js"></script>
+<!-- <script src="http://libs.baidu.com/jquery/2.1.1/jquery.min.js"></script> -->
+<script src="js/?app_id=1&app_key=1234"></script>
 </head>
 <body>
 <table width="400" border="0" cellpadding="5" cellspacing="1" bgcolor="#666666">
