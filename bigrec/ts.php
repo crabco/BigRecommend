@@ -7,7 +7,7 @@ error_reporting(0);
 <meta charset="utf-8"/>
 <head>
 <!-- <script src="http://libs.baidu.com/jquery/2.1.1/jquery.min.js"></script> -->
-<script src="js/?app_id=1&app_key=1234"></script>
+<script src="js/?app_id=1&app_key=123412&app_password=123456"></script>
 </head>
 <body>
 <table width="400" border="0" cellpadding="5" cellspacing="1" bgcolor="#666666">
@@ -102,6 +102,7 @@ error_reporting(0);
 function reco(){
 	$("#reco").html('');
 	$.get("./?act=reco&app_id=1&app_key=123412&user_no=<?php echo $_GET['user_no']?>&size=<?php echo $_GET['size']?>&debug=1",function(Json){
+		if( typeof Json['val'] )return;
 		if( Json['val'].length<=0 )return;
 		var ValTab = '';
 		for(var i=0;i<Json['val'].length;i++){
@@ -170,6 +171,7 @@ function user_post(){
 	return false;
 }
 reco();
+
 </script>
 </body>
 </html>

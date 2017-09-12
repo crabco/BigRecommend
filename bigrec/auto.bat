@@ -1,0 +1,1 @@
+php.exe cli_command.php

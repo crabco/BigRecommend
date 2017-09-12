@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="renderer" content="webkit"/>
+    <title>demo</title>
+    <script src="https://cdn.bootcss.com/jquery/1.9.1/jquery.min.js"></script>
+</head>
+<style>
+    table {
+        margin-bottom: 20px;
+        border-collapse: collapse;
+        border: none;
+    }
+
+    table td, table th {
+        border: solid #000 1px;
+        height: 30px;
+        padding: 0 5px;
+    }
+
+    input[type=number],
+    input[type=text] {
+        width: 100%;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    #textDemo {
+        display: none;
+    }
+
+    body {
+        font-family: "Arial", "Microsoft YaHei", "黑体", "宋体", sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+<body>
+<table>
+    <tr>
+        <th>app_id</th>
+        <th>app_key</th>
+        <th>app_password</th>
+    </tr>
+    <tr>
+        <td><input type="text" id="app_id" value=""/></td>
+        <td><input type="text" id="app_key" value=""/></td>
+        <td><input type="text" id="app_password" value=""/></td>
+    </tr>
+    <tr>
+        <td colspan='3' align='center'><input type="button" value='生成' onclick="generate();"/></td>
+    </tr>
+</table>
+<div id="textDemo">
+    <table>
+        <tr>
+            <th colspan='5' align='center'>用户添加|修改上报</th>
+        </tr>
+        <tr>
+            <th>序号(user_no)</th>
+            <th>性别(user_sex)</th>
+            <th>年龄(user_age)</th>
+            <th>手机号(user_phone)</th>
+            <th>来源(user_reco)</th>
+        </tr>
+        <form action="" data-js="bigrec_usermodify(obj)">
+            <tr>
+                <td><input type="text" name="user_no" value=""/></td>
+                <td><input type="text" name="user_sex" value=""/></td>
+                <td><input type="text" name="user_age" value=""/></td>
+                <td><input type="text" name="user_phone" value=""/></td>
+                <td><input type="text" name="user_reco" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='5' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='5' align='center'>用户移除上报</th>
+        </tr>
+        <tr>
+            <th>唯一序号(user_no)</th>
+        </tr>
+        <form action="" data-js="bigrec_userremove(obj)">
+            <tr>
+                <td><input type="text" name="user_no" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='5' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='5' align='center'>用户登录上报</th>
+        </tr>
+        <tr>
+            <th>唯一序号(user_no)</th>
+        </tr>
+        <form action="" data-js="bigrec_userlogin(obj)">
+            <tr>
+                <td><input type="text" name="user_no" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='5' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='6' align='center'>商品添加|修改上报</th>
+        </tr>
+        <tr>
+            <th>商品序号(pro_no)</th>
+            <th>商品名称(pro_name)</th>
+            <th>图片地址(pro_cover)</th>
+            <th>标签名称(pro_tags)</th>
+            <th>是否统计与显示(pro_show)</th>
+            <th>权重(pro_grade)</th>
+        </tr>
+        <form action="" data-js="bigrec_promodify(obj)">
+            <tr>
+                <td><input type="text" name="pro_no" value=""/></td>
+                <td><input type="text" name="pro_name" value=""/></td>
+                <td><input type="text" name="pro_cover" value=""/></td>
+                <td><input type="text" name="pro_tags" value=""/></td>
+                <td><input type="text" name="pro_show" value=""/></td>
+                <td><input type="text" name="pro_grade" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='6' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='6' align='center'>商品移除上报</th>
+        </tr>
+        <tr>
+            <th>商品序号(pro_no)</th>
+        </tr>
+        <form action="" data-js="bigrec_proremove(obj)">
+            <tr>
+                <td><input type="text" name="pro_no" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='6' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='6' align='center'>商品分享上报</th>
+        </tr>
+        <tr>
+            <th>唯一序号(pro_no)</th>
+            <th>分享渠道名称(share_name)</th>
+            <th>用户序号(user_no)</th>
+        </tr>
+        <form action="" data-js="bigrec_proshare(obj)">
+            <tr>
+                <td><input type="text" name="pro_no" value=""/></td>
+                <td><input type="text" name="share_name" value=""/></td>
+                <td><input type="text" name="user_no" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='6' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='6' align='center'>商品查看上报</th>
+        </tr>
+        <tr>
+            <th>唯一序号(pro_no)</th>
+            <th>查看方式(pro_play)</th>
+            <th>下级(pro_seq)</th>
+            <th>用户序号(user_no)</th>
+            <th>当前动作(pro_play_status)</th>
+        </tr>
+        <form action="" data-js="bigrec_proplay(obj)">
+            <tr>
+                <td><input type="text" name="pro_no" value=""/></td>
+                <td>
+                    <select name="pro_play" id="">
+                        <option value="info" selected>详情查看</option>
+                        <option value="play">内容查看</option>
+                    </select>
+                </td>
+                <td><input type="text" name="pro_seq" value=""/></td>
+                <td><input type="text" name="user_no" value=""/></td>
+                <td>
+                    <select name="pro_play_status" id="">
+                        <option value="new" selected>新动作</option>
+                        <option value="sleep">当前动作</option>
+                    </select>
+                </td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='6' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='7' align='center'>商品购买上报</th>
+        </tr>
+        <tr>
+            <th>唯一序号(pro_no)</th>
+            <th>订单序号(pro_sale_no)</th>
+            <th>渠道名称(pro_pay_name)</th>
+            <th>购买金额(pro_money)</th>
+            <th>购买用户(user_no)</th>
+            <th>下级关联(pro_seq)</th>
+            <th>来源名称(pro_sale_referer)</th>
+        </tr>
+        <form action="" data-js="bigrec_prosale(obj)">
+            <tr>
+                <td><input type="text" name="pro_no" value=""/></td>
+                <td><input type="text" name="pro_sale_no" value=""/></td>
+                <td><input type="text" name="pro_pay_name" value=""/></td>
+                <td><input type="text" name="pro_money" value=""/></td>
+                <td><input type="text" name="user_no" value=""/></td>
+                <td><input type="text" name="pro_seq" value=""/></td>
+                <td><input type="text" name="pro_sale_referer" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='7' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='7' align='center'>用户对象－统计信息获取接口</th>
+        </tr>
+        <tr>
+            <th>开始日期(date_start)</th>
+            <th>结束日期(date_end)</th>
+        </tr>
+        <form action="" data-js="information_acquisition(obj)">
+            <tr>
+                <td><input type="date" name="date_start" value=""/></td>
+                <td><input type="date" name="date_end" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='7' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='7' align='center'>用户对象－购买排行榜查询接口</th>
+        </tr>
+        <tr>
+            <th>查询第几页(p)</th>
+            <th>每页显示数据量(s)</th>
+        </tr>
+        <form action="" data-js="buying_list(obj)">
+            <tr>
+                <td><input type="text" name="p" value=""/></td>
+                <td><input type="text" name="s" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='7' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='7' align='center'>商品对象－统计信息获取接口</th>
+        </tr>
+        <tr>
+            <th>查询第几页(pro_no)</th>
+            <th>每页显示数据量(show_type)</th>
+            <th>开始日期(date_start)</th>
+            <th>结束日期(date_end)</th>
+        </tr>
+        <form action="" data-js="statistical_information(obj)">
+            <tr>
+                <td><input type="text" name="pro_no" value=""/></td>
+                <td><input type="text" name="show_type" value=""/></td>
+                <td><input type="date" name="date_start" value=""/></td>
+                <td><input type="date" name="date_end" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='7' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='7' align='center'>商品对象－销量排行榜查询接口</th>
+        </tr>
+        <tr>
+            <th>查询第几页(p)</th>
+            <th>每页显示数据量(s)</th>
+        </tr>
+        <form action="" data-js="sales_charts(obj)">
+            <tr>
+                <td><input type="text" name="p" value=""/></td>
+                <td><input type="text" name="s" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='7' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan='7' align='center'>商品对象－浏览排行榜查询接口</th>
+        </tr>
+        <tr>
+            <th>查询第几页(p)</th>
+            <th>每页显示数据量(s)</th>
+        </tr>
+        <form action="" data-js="browse_charts(obj)">
+            <tr>
+                <td><input type="text" name="p" value=""/></td>
+                <td><input type="text" name="s" value=""/></td>
+            </tr>
+        </form>
+        <tr>
+            <td colspan='7' align='center'><input type="button" class="submit" value='提交'/></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
+<script type="text/javascript">
+    function generate() {
+        if (!$('#app_id').val() || !$('#app_key').val() || !$('#app_password').val()) return;
+        $.getScript("/bigrec/js/?app_id=" + $('#app_id').val() + "&app_key=" + $('#app_key').val() + "&app_password=" + $('#app_password').val(), function (data, status, jqxhr) {
+            if (bigrec_appid) {
+                $('#textDemo').fadeIn();
+            }
+        });
+    }
+
+    $('.submit').on('click', function () {
+        var $form = $(this).closest('table').find('form');
+        var data = $form.serialize().split('&'), obj = {};
+        for (var i = 0; i < data.length; i++) {
+            var key = data[i].split('=');
+            obj[key[0]] = decodeURI(key[1]);
+        }
+        eval($form.data('js'));
+    });
+
+
+    function information_acquisition(InData) {
+        if (iswhere('pass') != true) return;
+        if (typeof InData != 'object') {
+            console.log('bigrec:数据类型错误');
+            return;
+        }
+
+        var Push = {};
+        Push['app_id'] = bigrec_appid;
+        Push['app_key'] = bigrec_appkey;
+        Push['app_password'] = bigrec_apppass;
+        Push['date_start'] = InData['date_start'];
+        Push['date_end'] = InData['date_end'];
+
+        var PushURL = bigrec_url + "?act=stat_user";
+        $.post(PushURL, Push, function (Json) {
+            if (Json.status == false) {
+                console.log("bigrec:" + Json.error)
+            } else {
+                console.log("data-->:" + Json);
+            }
+        }, 'json');
+    }
+
+    function buying_list(InData) {
+        if (iswhere('pass') != true) return;
+        if (typeof InData != 'object') {
+            console.log('bigrec:数据类型错误');
+            return;
+        }
+
+        var Push = {};
+        Push['app_id'] = bigrec_appid;
+        Push['app_key'] = bigrec_appkey;
+        Push['app_password'] = bigrec_apppass;
+        Push['p'] = InData['p'];
+        Push['s'] = InData['s'];
+
+        var PushURL = bigrec_url + "?act=stat_user_sale";
+        $.post(PushURL, Push, function (Json) {
+            if (Json.status == false) {
+                console.log("bigrec:" + Json.error)
+            } else {
+                console.log("data-->:" + Json);
+            }
+        }, 'json');
+    }
+
+    function statistical_information(InData) {
+        if (iswhere('pass') != true) return;
+        if (typeof InData != 'object') {
+            console.log('bigrec:数据类型错误');
+            return;
+        }
+
+        var Push = {};
+        Push['app_id'] = bigrec_appid;
+        Push['app_key'] = bigrec_appkey;
+        Push['app_password'] = bigrec_apppass;
+        Push['pro_no'] = InData['pro_no'];
+        Push['show_type'] = InData['show_type'];
+        Push['date_start'] = InData['date_start'];
+        Push['date_end'] = InData['date_end'];
+
+        var PushURL = bigrec_url + "?act=stat_pro";
+        $.post(PushURL, Push, function (Json) {
+            if (Json.status == false) {
+                console.log("bigrec:" + Json.error)
+            } else {
+                console.log("data-->:" + Json);
+            }
+        }, 'json');
+    }
+
+    function sales_charts(InData) {
+        if (iswhere('pass') != true) return;
+        if (typeof InData != 'object') {
+            console.log('bigrec:数据类型错误');
+            return;
+        }
+
+        var Push = {};
+        Push['app_id'] = bigrec_appid;
+        Push['app_key'] = bigrec_appkey;
+        Push['app_password'] = bigrec_apppass;
+        Push['p'] = InData['p'];
+        Push['s'] = InData['s'];
+
+        var PushURL = bigrec_url + "?act=stat_pro_sale";
+        $.post(PushURL, Push, function (Json) {
+            if (Json.status == false) {
+                console.log("bigrec:" + Json.error)
+            } else {
+                console.log("data-->:" + Json);
+            }
+        }, 'json');
+    }
+
+    function browse_charts(InData) {
+        if (iswhere('pass') != true) return;
+        if (typeof InData != 'object') {
+            console.log('bigrec:数据类型错误');
+            return;
+        }
+
+        var Push = {};
+        Push['app_id'] = bigrec_appid;
+        Push['app_key'] = bigrec_appkey;
+        Push['app_password'] = bigrec_apppass;
+        Push['p'] = InData['p'];
+        Push['s'] = InData['s'];
+
+        var PushURL = bigrec_url + "?act=stat_pro_info";
+        $.post(PushURL, Push, function (Json) {
+            if (Json.status == false) {
+                console.log("bigrec:" + Json.error)
+            } else {
+                console.log("data-->:" + Json);
+            }
+        }, 'json');
+    }
+</script>
