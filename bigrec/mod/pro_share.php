@@ -8,7 +8,9 @@ $AppID					= $Arr['app_id'];
 $Row					= array();
 $Row['pro_no']			= $Arr['pro_no'];
 $Row['event_type']		= 'share';
-$Row['event_time']		= time();
+$Row['event_time']		= date("Y-m-d H:i:s");
+$Row['event_time_date']	= date("Y-m-d");
+$Row['event_time_hour'] = date("H:i");
 $Row['user_no']			= $Arr['user_no'];
 $Ado->AutoExecute("big{$AppID}_pro_event", $Row, "INSERT");
 

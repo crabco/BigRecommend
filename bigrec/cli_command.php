@@ -8,19 +8,17 @@
 define('SYSTEM_SESSION_OFF', TRUE);
 require_once 'inc/auto.inc.php';
 
-echo iconv("utf-8", "gb2312", "启动中......\r\n");
+AppLog("启动中......\r\n");
 
 
 $Ado	= ADOPdo::Start();
-echo iconv("utf-8", "gb2312", "连接数据库成功.\r\n");
+AppLog("连接数据库成功.\r\n");
 
 
 //主统计进程启动时间
-$SumAppTime		= "00:00:00";		//用户数据统计
-$SumRecoTime	= "01:30:00";		//用户推荐统计
-$SumBrowse		= "H:00:00";		//用户浏览数据迁移
-
-
+$SumAppTime		= "H:00:00";		//用户数据统计
+$SumRecoTime	= "H:01:00";		//用户推荐统计
+$SumBrowse		= "H:i:00";			//用户浏览数据迁移
 
 
 //开始启动监听程序的同步数据

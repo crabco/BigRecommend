@@ -120,29 +120,39 @@ switch($Action){
 		include_once 'mod/stat_user_sale.php';
 	break;
 	
+	
+	
 	/**
-	 * 5.4	商品对象－统计信息获取接口
+	 * 5.4	用户对象 - 浏览事件查询
+	 */
+	case "stat_user_browse":
+		include_once 'mod/stat_user_browse.php';
+	break;
+	
+	
+	/**
+	 * 5.5	商品对象－统计信息获取接口
 	 */
 	case "stat_pro":
 		include_once 'mod/stat_pro.php';
 	break;
 		
 	/**
-	 * 5.5	商品对象－销量排行榜查询接口
+	 * 5.6	商品对象－销量排行榜查询接口
 	 */
 	case "stat_pro_sale":
 		include_once 'mod/stat_pro_sale.php';
 	break;
 	
 	/**
-	 * 5.6	商品对象－浏览排行榜查询接口
+	 * 5.7	商品对象－浏览排行榜查询接口
 	 */
 	case "stat_pro_info":
 		include_once 'mod/stat_pro_info.php';
 	break;
 	
 	/**
-	 * 5.7	商品对象－内容查看时长排行榜接口
+	 * 5.8	商品对象－内容查看时长排行榜接口
 	 */
 	case "stat_pro_playtime":
 		include_once 'mod/stat_pro_playtime.php';

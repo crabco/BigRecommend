@@ -211,7 +211,7 @@ function bigrec_proplay(InData){
 	window.bigrec_settime	= setInterval( function(){
 								$.post(PushURL,Push,function(Json){
 								   if( Json.status==false ) console.log("bigrec:"+Json.error);
-								},'json')},1000*60);
+								},'json')},1000*30);
 }
 
 //pro_no,pro_sale_no,pro_pay_name,pro_money,user_no,pro_seq,pro_sale_referer

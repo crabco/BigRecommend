@@ -25,12 +25,24 @@ $Row['pro_sale_no']		= $Arr['pro_sale_no'];
 $Row['pro_pay_name']	= $Arr['pro_pay_name'];
 $Row['pro_money']		= $Arr['pro_money'];
 $Row['pro_sale_referer']= $Arr['pro_sale_referer'];
+
+
+$Event					= $Ado->GetOne("SELECT * FROM big{$AppID}_pro_event WHERE pro_sale_no='{$Row['pro_sale_no']}'");
+if( !empty($Event) ){
+	$Json['status']			= false;
+	$Json['error']			= '订单编号不可重复.';
+	output($Json);
+}
+
+
 $Ado->AutoExecute("big{$AppID}_pro_event", $Row, "INSERT");
 $Ado->Execute("UPDATE big{$AppID}_pro SET pro_sale=pro_sale+{$Arr['pro_money']} WHERE pro_no='{$Arr['pro_no']}'");
 
+
 //如果用户不为空则更新用户最后活动时间
 if( !empty($Arr['user_no'])){
-	$Ado->AutoExecute("big{$AppID}_user", array('user_time_update'=>time()), "UPDATE", "user_no='{$Arr['user_no']}'");
+	$Time				= time();
+	$Ado->Execute("UPDATE big{$AppID}_user SET user_time_update='{$Time}',user_sale=user_sale+{$Row['pro_money']} WHERE user_no='{$Arr['user_no']}'");
 }
 
 $Json['status']			= true;

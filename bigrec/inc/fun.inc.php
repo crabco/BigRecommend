@@ -38,15 +38,18 @@ function ParseArray($Arr){
 	$AppName		= array();
 	$AppVal			= array();
 	$AppSet			= array();
+	$AppNo			= array();
 	
 	if( !empty($Arr) ){
 		foreach($Arr as $Vs=>$Rs){
+			if( empty($Rs) )continue;
 			$AppName[]		= "`{$Vs}`";
 			$AppVal[]		= "'{$Rs}'";
 			$AppSet[]		= "`{$Vs}`='{$Rs}'";
+			$AppNo[]		= $Rs;
 		}
 	}
-	return array('name'=>$AppName,'value'=>$AppVal,'set'=>$AppSet);
+	return array('name'=>$AppName,'value'=>$AppVal,'set'=>$AppSet,"no"=>$AppNo);
 }
 
 /**
@@ -55,7 +58,7 @@ function ParseArray($Arr){
 function AppCommandIs(){
 	global $Ado;
 	
-	$AppRow	= $Ado->GetOne("SELECT COUNT(app_id) FROM big_app_cache");
+	$AppRow	= $Ado->GetOne("SELECT COUNT(*) FROM big_command");
 	if( ceil($AppRow)<=0 ){
 		output( array('status'=>false,'error'=>'系统暂未运行,请启动监听程序') );
 	}
@@ -186,6 +189,14 @@ function AppSumBrowse(){
 	sleep(1);
 }
 
+function AppLog($Log){
+	if( PHP_OS=='WINNT' ){
+		echo iconv("utf-8", "gb2312", $Log."\r\n");
+	}else{
+		echo ($Log."\r\n");
+	}
+}
+
 /**
  * 更新监听程序的时间
  */
@@ -217,7 +228,7 @@ function AppCommand( $Log=null ){
 		$Arr				= array('command_id'=>AppCommandID,'command_time'=>time());
 		if( !empty($Log) ){
 			$Arr['command_log']	= $Log;
-			echo iconv("utf-8", "gb2312", $Log."\r\n");
+			AppLog($Log);
 		}
 		
 		if( empty($AppRow) ){
